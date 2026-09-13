@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>勉強チャンネル</title>
+<style>
+  :root {
+    --paper: #F1F0EA;
+    --ink: #23291F;
+    --ink-soft: #5B6459;
+    --line: #D8D6CB;
+    --accent-math: #3D5A45;
+    --accent-main: #6B4A2E;
+    --accent-geo: #4A5A78;
+    --accent-other: #7A4A5A;
+    --card-bg: #FBFAF6;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+    line-height: 1.6;
+  }
+
+  header {
+    padding: 28px 24px 18px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  header h1 {
+    margin: 0 0 4px;
+    font-family: "Hiragino Mincho ProN", "Shippori Mincho", "Yu Mincho", serif;
+    font-weight: 600;
+    font-size: clamp(22px, 4vw, 30px);
+    letter-spacing: 0.02em;
+  }
+
+  header p {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 14px;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 0;
+    min-height: calc(100vh - 90px);
+  }
+
+  @media (max-width: 760px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+
+  nav {
+    border-right: 1px solid var(--line);
+    padding: 18px 14px 40px;
+    overflow-y: auto;
+  }
+
+  .group-title {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin: 20px 4px 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--line);
+  }
+  .group-title:first-child { margin-top: 4px; }
+
+  .channel-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 10px;
+    font-size: 14px;
+    color: var(--ink);
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .channel-btn:hover { background: var(--card-bg); }
+
+  .channel-btn.active {
+    background: var(--card-bg);
+    box-shadow: inset 3px 0 0 var(--dot);
+    font-weight: 600;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--dot);
+    flex-shrink: 0;
+  }
+
+  main {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .player-wrap {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%;
+    background: #111;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .player-wrap iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  .now-playing h2 {
+    margin: 0 0 4px;
+    font-size: 18px;
+  }
+
+  .now-playing p {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 13px;
+  }
+
+  footer {
+    padding: 16px 24px 28px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    border-top: 1px solid var(--line);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>勉強チャンネル</h1>
+  <p>見られる動画はここに並んでいるものだけです。チャンネルを選ぶと再生が始まります。</p>
+</header>
+
+<div class="layout">
+  <nav id="nav"></nav>
+  <main>
+    <div class="player-wrap">
+      <iframe id="player"
+        src=""
+        title="動画プレイヤー"
+        allow="encrypted-media; picture-in-picture"
+        allowfullscreen></iframe>
+    </div>
+    <div class="now-playing">
+      <h2 id="now-title">読み込み中…</h2>
+      <p id="now-desc"></p>
+    </div>
+  </main>
+</div>
+
+<footer>
+  このページに登録されているチャンネルの動画一覧を、YouTubeの検索や関連動画なしで再生できるようにしています。
+</footer>
+
+<script>
+  const groups = [
+    {
+      name: "数学",
+      color: "#3D5A45",
+      channels: [
+        { title: "超わかる！高校数学 II・B", id: "UCII49VK8oCs134zyyrxl0jg", desc: "難関大対策の高校数学解説" },
+        { title: "超わかる！授業動画", id: "UCZUPMvvW1ggn4gbSY741LdA", desc: "数学・化学・英語の解説アニメ" },
+        { title: "Stardy -河野玄斗の神授業", id: "UCySNyY7ZlIyIeQ0T_8ah4Vg", desc: "勉強法・数学・英語ほか" },
+        { title: "タラ先生", id: "UC-0lnsGCgB9JTyMtHajRUrQ", desc: "アニメーションで学ぶ高校数学" },
+        { title: "数学・英語のトリセツ!", id: "UC7zx7uOmqXsD153rPSUvxcg", desc: "数学・英語の解説動画" }
+      ]
+    },
+    {
+      name: "主要教科（映像授業）",
+      color: "#6B4A2E",
+      channels: [
+        { title: "映像授業 Try IT（トライイット）", id: "UCcj-cHmS0uD91MLjtdiN89Q", desc: "中高5教科の授業動画" }
+      ]
+    },
+    {
+      name: "地理",
+      color: "#4A5A78",
+      channels: [
+        { title: "ジオチャンネル 地理の講義", id: "UCzoGY9oIih_r3ZKlsQzM2EQ", desc: "系統地理・地誌の授業" }
+      ]
+    },
+    {
+      name: "学び方・その他",
+      color: "#7A4A5A",
+      channels: [
+        { title: "記憶博士の非常識な記憶学", id: "UCryn4Yq3e-cLf9opJ24pvCg", desc: "記憶法・学習法の解説" },
+        { title: "WEB玉のタマえもん", id: "UCIigv9W8ChJl0P-28Eev8Jw", desc: "面白おかしく学ぶ授業動画" }
+      ]
+    }
+  ];
+
+  const nav = document.getElementById("nav");
+  const player = document.getElementById("player");
+  const nowTitle = document.getElementById("now-title");
+  const nowDesc = document.getElementById("now-desc");
+
+  function playChannel(channel, btn) {
+    const uploadsPlaylist = "UU" + channel.id.slice(2);
+    player.src = "https://www.youtube-nocookie.com/embed/videoseries?list=" + uploadsPlaylist + "&rel=0&modestbranding=1";
+    nowTitle.textContent = channel.title;
+    nowDesc.textContent = channel.desc;
+    document.querySelectorAll(".channel-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+  }
+
+  groups.forEach((group, gi) => {
+    const label = document.createElement("div");
+    label.className = "group-title";
+    label.textContent = group.name;
+    nav.appendChild(label);
+
+    group.channels.forEach((channel, ci) => {
+      const btn = document.createElement("button");
+      btn.className = "channel-btn";
+      btn.style.setProperty("--dot", group.color);
+      btn.innerHTML = '<span class="dot"></span><span>' + channel.title + '</span>';
+      btn.addEventListener("click", () => playChannel(channel, btn));
+      nav.appendChild(btn);
+
+      if (gi === 0 && ci === 0) {
+        // 初期表示として最初のチャンネルを再生
+        setTimeout(() => playChannel(channel, btn), 0);
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
