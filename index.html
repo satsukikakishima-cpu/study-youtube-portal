@@ -96,6 +96,17 @@
     font-weight: 600;
   }
 
+  .channel-btn { cursor: grab; }
+
+  .channel-btn.sortable-chosen { cursor: grabbing; }
+
+  .channel-btn.sortable-ghost {
+    opacity: 0.4;
+    background: var(--card-bg);
+  }
+
+  .channel-btn.sortable-drag { cursor: grabbing; }
+
   .dot {
     width: 8px;
     height: 8px;
@@ -277,18 +288,19 @@
   このページに登録されているチャンネルの動画一覧を、YouTubeの検索や関連動画なしで再生できるようにしています。
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script>
   const groups = [
     {
       name: "数学",
       color: "#3D5A45",
       channels: [
+        { title: "高校数学が面白いほどわかる", id: "UCyFkMK_Zmr3KPSEO5KyITOQ", desc: "数学専門塾監修、解法パターンで学ぶ高校数学" },
         { title: "超わかる！高校数学 II・B", id: "UCII49VK8oCs134zyyrxl0jg", desc: "難関大対策の高校数学解説" },
         { title: "超わかる！授業動画", id: "UCZUPMvvW1ggn4gbSY741LdA", desc: "数学・化学・英語の解説アニメ" },
         { title: "Stardy -河野玄斗の神授業", id: "UCySNyY7ZlIyIeQ0T_8ah4Vg", desc: "勉強法・数学・英語ほか" },
         { title: "タラ先生", id: "UC-0lnsGCgB9JTyMtHajRUrQ", desc: "アニメーションで学ぶ高校数学" },
-        { title: "数学・英語のトリセツ!", id: "UC7zx7uOmqXsD153rPSUvxcg", desc: "数学・英語の解説動画" },
-        { title: "高校数学が面白いほどわかる", id: "UCyFkMK_Zmr3KPSEO5KyITOQ", desc: "数学専門塾監修、解法パターンで学ぶ高校数学" }
+        { title: "数学・英語のトリセツ!", id: "UC7zx7uOmqXsD153rPSUvxcg", desc: "数学・英語の解説動画" }
       ]
     },
     {
@@ -451,25 +463,72 @@
 
   searchInput.addEventListener("input", () => renderVideoList(false));
 
+  function channelOrderKey(groupName) {
+    return "channelOrder:" + groupName;
+  }
+
+  function applySavedOrder(groupName, channels) {
+    let saved = null;
+    try {
+      saved = JSON.parse(localStorage.getItem(channelOrderKey(groupName)));
+    } catch (e) {
+      saved = null;
+    }
+    if (!Array.isArray(saved)) return channels;
+
+    const byId = new Map(channels.map(c => [c.id, c]));
+    const ordered = saved.map(id => byId.get(id)).filter(Boolean);
+    channels.forEach(c => {
+      if (!saved.includes(c.id)) ordered.push(c);
+    });
+    return ordered;
+  }
+
+  function saveOrder(groupName, listEl) {
+    const ids = Array.from(listEl.children).map(el => el.dataset.channelId);
+    try {
+      localStorage.setItem(channelOrderKey(groupName), JSON.stringify(ids));
+    } catch (e) {
+      // localStorageが使えない環境では並び順の保存をあきらめる
+    }
+  }
+
   groups.forEach((group, gi) => {
     const label = document.createElement("div");
     label.className = "group-title";
     label.textContent = group.name;
     nav.appendChild(label);
 
+    group.channels = applySavedOrder(group.name, group.channels);
+
+    const list = document.createElement("div");
+    list.className = "channel-list";
+    nav.appendChild(list);
+
     group.channels.forEach((channel, ci) => {
       const btn = document.createElement("button");
       btn.className = "channel-btn";
       btn.style.setProperty("--dot", group.color);
+      btn.dataset.channelId = channel.id;
       btn.innerHTML = '<span class="dot"></span><span>' + channel.title + '</span>';
       btn.addEventListener("click", () => selectChannel(channel, btn));
-      nav.appendChild(btn);
+      list.appendChild(btn);
 
       if (gi === 0 && ci === 0) {
         // 初期表示として最初のチャンネルを選択
         setTimeout(() => selectChannel(channel, btn), 0);
       }
     });
+
+    if (window.Sortable) {
+      Sortable.create(list, {
+        animation: 150,
+        ghostClass: "sortable-ghost",
+        chosenClass: "sortable-chosen",
+        dragClass: "sortable-drag",
+        onEnd: () => saveOrder(group.name, list)
+      });
+    }
   });
 </script>
 
